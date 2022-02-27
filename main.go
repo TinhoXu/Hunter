@@ -8,7 +8,7 @@ import (
 	"github.com/TinhoXu/Hunter/core"
 	"github.com/TinhoXu/Hunter/sjlleo"
 	"github.com/TinhoXu/Hunter/tools"
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"path"
