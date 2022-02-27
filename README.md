@@ -17,7 +17,12 @@ wget -O nf https://github.com/TinhoXu/Hunter/releases/download/1.0/nf_V1.0_xxx &
 ./nf -path xxx/clash/config.yaml  
 ./nf -path xxx/clash/config.yaml -custom 70143836  
 
-<img src="./docs/1645961860165.png" alt="食用样例">
+ps:  
+1.如果指定了 path 参数，则会缓存路径到当前程序目录下的 config.yaml  
+2.下次运行时，如果 path 和上次一样，则可以不用再指定，直接 ./nf 运行即可  
+3.如果需要使用默认参数（即当前程序目录下的 clash.yaml 文件），则运行 ./nf -path . 即可清除 path 参数
+
+<img src="./docs/1645961860165.jpg" alt="食用样例">
 
 ## 鸣谢
 
