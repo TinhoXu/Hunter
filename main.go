@@ -93,7 +93,6 @@ func verify(propPath, defaultClashPath string) {
 	b, _ := batch.New(context.Background(), batch.WithConcurrencyNum(10))
 	defaultURLTestTimeout := time.Second * 5
 
-	var resultMap = make(map[string][]string)
 	for _, proxy := range proxies {
 		p := proxy
 		if p.Addr() == "" {
@@ -116,24 +115,39 @@ func verify(propPath, defaultClashPath string) {
 				}
 			}
 
-			resultMap[result] = append(resultMap[result], p.Name())
-			fmt.Printf("name: %-30s, type: %-20s, result: %s \n", p.Name(), p.Type(), result)
-			return nil, nil
+			fmt.Printf("name: %-25s, type: %-15s, result: %s \n", p.Name(), p.Type(), result)
+			return result, nil
 		})
 	}
-	b.Wait()
 
-	if len(resultMap) == 0 {
+	results, _ := b.WaitAndGetResult()
+	if len(results) == 0 {
 		fmt.Println("解析失败，请确认：\n    1.配置文件是否存在\n    2.配置文件是否配置正确")
 		sjlleoVerify()
 		return
 	}
-
 	fmt.Println("\033[0;36m------------------------------ 结果汇总 ------------------------------\033[0;36m")
-	for key, value := range resultMap {
-		sort.Strings(value)
-		fmt.Println(key)
-		for _, item := range value {
+
+	// 结果汇总
+	var resultMap = make(map[string][]string)
+	for k, v := range results {
+		value := tools.Strval(v.Value)
+		resultMap[value] = append(resultMap[value], k)
+	}
+
+	// keys 排序
+	var keys = make([]string, 0, len(resultMap))
+	for k := range resultMap {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	// 打印结果
+	for _, k := range keys {
+		fmt.Println(k)
+		v := resultMap[k]
+		sort.Strings(v)
+		for _, item := range v {
 			fmt.Printf("\t%s\n", item)
 		}
 		fmt.Println()

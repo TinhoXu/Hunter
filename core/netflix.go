@@ -14,10 +14,10 @@ import (
 )
 
 const (
-	NonSelfMadeAvailable = "\033[0;32m完美解锁\033[0m"        // 绿色
-	SelfMadeAvailable    = "\033[0;33m仅解锁自制剧\033[0m"      // 黄色
-	AreaAvailable        = "\033[0;35m仅解锁宽松版权的自制剧\033[0m" // 紫色
-	NothingAvailable     = "\033[0;31m啥也不是\033[0m"        // 红色
+	NonSelfMadeAvailable = "a.\033[0;32m完美解锁\033[0m"        // 绿色
+	SelfMadeAvailable    = "b.\033[0;33m仅解锁自制剧\033[0m"      // 黄色
+	AreaAvailable        = "c.\033[0;35m仅解锁宽松版权的自制剧\033[0m" // 紫色
+	NothingAvailable     = "d.\033[0;31m啥也不是\033[0m"        // 红色
 
 	Available   = "\033[0;35m可以观看此影片\033[0m" // 绿色
 	Unavailable = "\033[0;31m不能观看此影片\033[0m" // 红色
@@ -36,18 +36,17 @@ func UnlockTest(ctx context.Context, p constant.Proxy) string {
 }
 
 func UnlockTestWithMovieID(ctx context.Context, p constant.Proxy, movieID int) bool {
-	testURL := common.NetflixUrl + strconv.Itoa(movieID)
-	retCode := requestNetflixUri(ctx, p, testURL)
-	return !strings.Contains(retCode, "Error") && !strings.Contains(retCode, "Ban")
+	defer func() {
+		err := recover()
+		if err != nil {
+			fmt.Println("requestNetflixUri error:", err)
+		}
+	}()
+	result, err := request(ctx, p, "", common.NetflixUrl+strconv.Itoa(movieID), handlerResp)
+	return err == nil && !strings.Contains(result, "Ban")
 }
 
-func requestNetflixUri(ctx context.Context, p constant.Proxy, uri string) string {
-	resp, err := request(ctx, p, "", uri)
-	if err != nil {
-		return "Error"
-	}
-	defer resp.Body.Close()
-
+func handlerResp(resp *http.Response) string {
 	Header := resp.Header
 
 	if Header["X-Robots-Tag"] != nil {
@@ -63,7 +62,7 @@ func requestNetflixUri(ctx context.Context, p constant.Proxy, uri string) string
 	}
 }
 
-func request(ctx context.Context, p constant.Proxy, ip, uri string) (resp *http.Response, err error) {
+func request(ctx context.Context, p constant.Proxy, ip, uri string, handler func(resp *http.Response) string) (result string, err error) {
 	// 获取 client
 	addr, err := urlToMetadata(uri)
 	if err != nil {
@@ -86,6 +85,7 @@ func request(ctx context.Context, p constant.Proxy, ip, uri string) (resp *http.
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 	}
+	defer transport.CloseIdleConnections()
 
 	client := http.Client{
 		Transport: transport,
@@ -107,17 +107,19 @@ func request(ctx context.Context, p constant.Proxy, ip, uri string) (resp *http.
 	}
 
 	req, err := http.NewRequest(http.MethodGet, newUri, nil)
+	if err != nil {
+		return
+	}
 	req.Host = host
 	req.Header.Set("USER-AGENT", common.UserAgent)
 
-	if err != nil {
-		return
-	}
 	req = req.WithContext(ctx)
-	resp, err = client.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return
 	}
+	defer resp.Body.Close()
+	result = handler(resp)
 	return
 }
 
