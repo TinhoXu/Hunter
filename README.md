@@ -12,7 +12,7 @@
 
 ## 食用方法
 
-wget -O nf https://github.com/TinhoXu/Hunter/releases/download/1.0/nf_V1.0_xxx && chmod +x nf && clear  
+wget -O nf https://github.com/TinhoXu/Hunter/releases/download/1.0/nf_V1.0_xxx && chmod +x nf  
 
 ./nf -path xxx/clash/config.yaml  
 ./nf -path xxx/clash/config.yaml -custom 70143836  
